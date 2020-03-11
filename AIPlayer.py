@@ -17,10 +17,7 @@ class AIPlayer:
         else:
             player_name = '白棋'
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
-        self.action = None
-        self.alpha_beta(board, self.min_val, self.max_val, self.color, self.depth)
-        print(self.action)
-        return self.action
+        return self.alpha_beta(board, self.min_val, self.max_val, self.color, self.depth)[1]
 
     def oppo_color(self, color):
         return "X" if color is "O" else "O"
@@ -28,33 +25,37 @@ class AIPlayer:
     def sign_color(self, color):
         return 1 if color is self.color else - 1
 
+    def value_color(self, color):
+        return 1 if color is self.color else (-1 if color is self.oppo_color(self.color) else 0)
+
     def evaluate(self, board, color):
-        _board = np.sum(np.asarray([[self.sign_color(i) for i in j] for j in board._board]) * self.weight)
+        _board = np.sum(np.asarray([[self.value_color(i) for i in j] for j in board._board]) * self.weight)
         return self.sign_color(color) * _board
 
     def alpha_beta(self, board, alpha, beta, color, depth):
+        action = None
         max_val = self.min_val
         moves = list(board.get_legal_actions(color))
-        pos_moves = list(board.get_legal_actions(self.oppo_color(color)))
+        oppo_moves = list(board.get_legal_actions(self.oppo_color(color)))
+        movability = len(moves) - len(oppo_moves)
+        movability *= self.sign_color(color)
+        movability *= np.average(self.weight)
         if depth <= 0:
-            return self.evaluate(board, color)
+            return self.evaluate(board, color) + movability, action
         if len(moves) is 0:
-            if len(pos_moves) is 0:
-                return self.evaluate(board, color)
-            return -self.alpha_beta(board, -beta, -alpha, self.oppo_color(color), depth)
+            if len(oppo_moves) is 0:
+                return self.evaluate(board, color) + movability, action
+            return -self.alpha_beta(board, -beta, -alpha, self.oppo_color(color), depth)[0], action
         for move in moves:
             flipped = board._move(move, color)
-            val = -self.alpha_beta(board, -beta, -alpha, self.oppo_color(color), depth - 1)
-            print(depth, end=' ')
-            print(self.action)
-            print(moves)
+            val = -self.alpha_beta(board, -beta, -alpha, self.oppo_color(color), depth - 1)[0]
             board.backpropagation(move, flipped, color)
             if val > max_val:
                 max_val = val
-                self.action = move
+                action = move
             if max_val > alpha:
                 if max_val >= beta:
-                    self.action = move
-                    return max_val
+                    action = move
+                    return max_val, action
                 alpha = max_val
-        return max_val
+        return max_val, action
