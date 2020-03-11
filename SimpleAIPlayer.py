@@ -9,8 +9,7 @@ class SimpleAIPlayer:
         self.max_val = max_val
         self.min_val = min_val
         self.depth = max_depth
-        # self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90], [-60, -80, 5, 5, 5, 5, -80, -60], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [-60, -80, 5, 5, 5, 5, -80, -60], [90, -60, 10, 10, 10, 10, -60, 90], ])
-        self.weight = np.ones((8,8))
+        self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90], [-60, -80, 5, 5, 5, 5, -80, -60], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [-60, -80, 5, 5, 5, 5, -80, -60], [90, -60, 10, 10, 10, 10, -60, 90], ])
 
     def get_move(self, board):
         if self.color == 'X':
@@ -37,12 +36,16 @@ class SimpleAIPlayer:
         action = None
         max_val = self.min_val
         moves = list(board.get_legal_actions(color))
-        pos_moves = list(board.get_legal_actions(self.oppo_color(color)))
+        oppo_moves = list(board.get_legal_actions(self.oppo_color(color)))
+        # movability = len(moves) - len(oppo_moves)
+        # movability *= self.sign_color(color)
+        # movability *= np.average(self.weight)
+        movability = 0
         if depth <= 0:
-            return self.evaluate(board, color), action
+            return self.evaluate(board, color) + movability, action
         if len(moves) is 0:
-            if len(pos_moves) is 0:
-                return self.evaluate(board, color), action
+            if len(oppo_moves) is 0:
+                return self.evaluate(board, color) + movability, action
             return -self.alpha_beta(board, -beta, -alpha, self.oppo_color(color), depth)[0], action
         for move in moves:
             flipped = board._move(move, color)

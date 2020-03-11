@@ -1,16 +1,16 @@
 # 导入黑白棋文件
-from game import Game  
+from game import Game
 from RandomPlayer import RandomPlayer
 from HumanPlayer import HumanPlayer
 from AIPlayer import AIPlayer
 from SimpleAIPlayer import SimpleAIPlayer
 # 人类玩家黑棋初始化
-black_player = HumanPlayer("X")
-# black_player = SimpleAIPlayer("X")
+# black_player = HumanPlayer("X")
+black_player = SimpleAIPlayer("X", max_depth=8)
 # black_player = RandomPlayer("X")
 
 # AI 玩家 白棋初始化
-white_player = AIPlayer("O", max_depth=3)
+white_player = AIPlayer("O", max_depth=8)
 # white_player = RandomPlayer("O")
 
 while True:
