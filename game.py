@@ -154,7 +154,7 @@ class Game(object):
             else:
                 # 统计一步所用的时间
                 es_time = (end_time - start_time).seconds
-                if es_time > 60:
+                if es_time > 6000:
                     # 该步超过60秒则结束比赛。
                     print('\n{} 思考超过 60s'.format(self.current_player))
                     winner, diff = self.force_loss(is_timeout=True)

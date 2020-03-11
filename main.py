@@ -6,11 +6,13 @@ from AIPlayer import AIPlayer
 from SimpleAIPlayer import SimpleAIPlayer
 # 人类玩家黑棋初始化
 # black_player = HumanPlayer("X")
-black_player = SimpleAIPlayer("X", max_depth=8)
-# black_player = RandomPlayer("X")
+# black_player = SimpleAIPlayer("X")
+black_player = RandomPlayer("X")
+# black_player = AIPlayer("X", max_depth=3)
 
 # AI 玩家 白棋初始化
-white_player = AIPlayer("O", max_depth=8)
+white_player = AIPlayer("O", max_depth=3)
+# white_player = SimpleAIPlayer("O")
 # white_player = RandomPlayer("O")
 
 while True:
