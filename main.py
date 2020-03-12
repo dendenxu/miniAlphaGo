@@ -7,18 +7,22 @@ if __name__ == '__main__':
     import SimpleAIPlayer
     import MultiCore
     import SingleCore
+    import wyq
 
-    max_depth_black = 5
+    max_depth_black = 1
     max_depth_white = 5
     while True:
         # 人类玩家黑棋初始化
         # black_player = HumanPlayer("X")
         # black_player = RandomPlayer("X")
-        black_player = SimpleAIPlayer.AIPlayer("X", max_depth=max_depth_black)
+        # black_player = SimpleAIPlayer.AIPlayer("X", max_depth=max_depth_black)
         # black_player = AIPlayer.AIPlayer("X", max_depth=3)
+        black_player = wyq.AIPlayer("X", max_depth=max_depth_black)
+        # black_player = SingleCore.AIPlayer("X", max_depth=max_depth_black)
 
         # AI 玩家 白棋初始化
         white_player = SingleCore.AIPlayer("O", max_depth=max_depth_white)
+        # white_player = wyq.AIPlayer("O", max_depth=max_depth_white)
         # white_player = SimpleAIPlayer.AIPlayer("O")
         # white_player = RandomPlayer("O")
         # 游戏初始化，第一个玩家是黑棋，第二个玩家是白棋

@@ -46,7 +46,7 @@ class AIPlayer:
         weight = self.weight
         _board = np.asarray([[1 if (piece is color) else (-1 if piece is oppo_color else 0)
                               for piece in line] for line in board._board])
-        sep_board = np.stack(((_board > 1).astype(int), np.negative((_board < -1).astype(int))))
+        sep_board = np.stack(((_board == 1).astype(int), np.negative((_board == -1).astype(int))))
         stability = 0
         for i in range(2):
             if sep_board[0, 0, i]:

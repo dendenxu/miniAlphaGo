@@ -3,7 +3,7 @@ from random import shuffle
 
 
 class AIPlayer:
-    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3, max_width=8):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3, max_width=13):
         self.action = None
         self.color = color
         self.oppo_color = "X" if color is "O" else "O"
@@ -11,15 +11,15 @@ class AIPlayer:
         self.small_val = small_val
         self.depth = max_depth
         self.max_width = max_width
-        self.weight = (np.asarray([[150, -60, 10, 10, 10, 10, -60, 150],
-                                   [-60, -80, 5, 5, 5, 5, -80, -60],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [-60, -80, 5, 5, 5, 5, -80, -60],
-                                   [150, -60, 10, 10, 10, 10, -60, 150]]))
-        self.factor = abs(np.average(np.average(self.weight)))
+        self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90],
+                                  [-60, -80, 5, 5, 5, 5, -80, 60],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [-60, -80, 5, 5, 5, 5, -80, 60],
+                                  [90, -60, 10, 10, 10, 10, -60, 90]])
+        self.factor = abs(np.average(self.weight)) * 100
         self.history = np.tile(np.arange(64), 128).reshape((2, 64, 64))
 
     def get_move(self, board):
@@ -32,21 +32,38 @@ class AIPlayer:
         weight = self.weight
         _board = np.asarray([[1 if (piece is color) else (-1 if piece is oppo_color else 0)
                               for piece in line] for line in board._board])
-        sep_board = np.stack(((_board > 1).astype(int), np.negative((_board < -1).astype(int))))
+        sep_board = np.stack(((_board == 1).astype(int), np.negative((_board == -1).astype(int))))
         stability = 0
         for i in range(2):
-            if sep_board[0, 0, i]:
-                stability += np.sum(sep_board[0, 0::-1, i])
-            if sep_board[0, -1, i]:
-                stability += np.sum(sep_board[0::-1, -1, i])
-            if sep_board[-1, 0, i]:
-                stability += np.sum(sep_board[-1, 1::, i])
-            if sep_board[-1, -1, i]:
-                stability += np.sum(sep_board[1::, 0, i])
+            if sep_board[i, 0, 0]:
+                stability += np.sum(sep_board[i, 0, 0:-1])
+                stability += np.sum(sep_board[i, 1::, 0])
+                if sep_board[i, 1, 1]:
+                    stability += np.sum(sep_board[i, 1, 1:-2])
+                    stability += np.sum(sep_board[i, 2:-1, 1])
+            if sep_board[i, 0, -1]:
+                stability += np.sum(sep_board[i, 0:-1, -1])
+                stability += np.sum(sep_board[i, 0, 0:-1])
+                if sep_board[i, 1, -2]:
+                    stability += np.sum(sep_board[i, 1:-2, -2])
+                    stability += np.sum(sep_board[i, 1, 1:-2])
+            if sep_board[i, -1, -1]:
+                stability += np.sum(sep_board[i, -1, 1::])
+                stability += np.sum(sep_board[i, 0:-1, -1])
+                if sep_board[i, -2, -2]:
+                    stability += np.sum(sep_board[i, -2, 2:-1])
+                    stability += np.sum(sep_board[i, 1:-2, -2])
+            if sep_board[i, -1, 0]:
+                stability += np.sum(sep_board[i, 1::, 0])
+                stability += np.sum(sep_board[i, -1, 1::])
+                if sep_board[i, -2, 1]:
+                    stability += np.sum(sep_board[i, 2:-1, 1])
+                    stability += np.sum(sep_board[i, -2, 2:-1])
+
         _board *= weight
         _board = np.sum(_board)
         _board += stability * self.factor
-        return _board
+        return _board if np.sum(sep_board[0, :, :]) else self.small_val
 
     def alpha_beta(self, board, alpha, beta, color, depth, step):
         action = None
@@ -64,7 +81,7 @@ class AIPlayer:
             return -self.alpha_beta(board, -beta, -alpha, oppo_color, depth, step)[0], action
         global_depth = step + self.depth - depth
         moves = self.history_sort(board, moves, color, global_depth)
-        moves = moves[0:min(len(moves), self.max_width)]
+        # moves = moves[0:min(len(moves), self.max_width - depth)]
         for move in moves:
             flipped = board._move(move, color)
             val = -self.alpha_beta(board, -beta, -alpha, oppo_color, depth - 1, step)[0]
