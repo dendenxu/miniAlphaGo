@@ -28,42 +28,42 @@ class AIPlayer:
     def get_move(self, board):
         player_name = '黑棋' if self.color == 'X' else '白棋'
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
-        # # start_time = time.perf_counter()
-        # moves = list(board.get_legal_actions(self.color))
-        # jobs = []
-        # manager = Manager()
-        # result_list = manager.list([0 for _ in enumerate(moves)])
-        # for i, move in enumerate(moves):
-        #     temp_board = deepcopy(board)
-        #     temp_board._move(move, self.color)
-        #     p = Process(target=self.wrapper, args=(temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth - 1, i, result_list))
-        #     jobs.append(p)
-        #     p.start()
+        # start_time = time.perf_counter()
+        moves = list(board.get_legal_actions(self.color))
+        jobs = []
+        manager = Manager()
+        result_list = manager.list([0 for _ in enumerate(moves)])
+        for i, move in enumerate(moves):
+            temp_board = deepcopy(board)
+            temp_board._move(move, self.color)
+            p = Process(target=self.wrapper, args=(temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth - 1, i, result_list))
+            jobs.append(p)
+            p.start()
         
-        # action = None
-        # # middle_time = time.perf_counter()
-        # # print("Time used in constructing the thread is: {}".format(middle_time - start_time))
-        # for job in jobs:
-        #     job.join()
-        # action = moves[np.argmax(result_list)]
-        # # end_time = time.perf_counter()
-        # # print("Time used in calculating result is: {}".format(end_time - middle_time))
-        # # print(action)
-        # # print(moves)
-        # # print(result_list)
-        # return action
-        # # start_time = time.perf_counter()
-        result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)
-        # # end_time = time.perf_counter()
-        # # print("Time used in calculating result is: {}".format(end_time - start_time))
-        # # print(result)
-        return result[1]
+        action = None
+        # middle_time = time.perf_counter()
+        # print("Time used in constructing the thread is: {}".format(middle_time - start_time))
+        for job in jobs:
+            job.join()
+        action = moves[np.argmax(result_list)]
+        # end_time = time.perf_counter()
+        # print("Time used in calculating result is: {}".format(end_time - middle_time))
+        # print(action)
+        # print(moves)
+        # print(result_list)
+        return action
+        # start_time = time.perf_counter()
+        # result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)
+        # end_time = time.perf_counter()
+        # print("Time used in calculating result is: {}".format(end_time - start_time))
+        # print(result)
+        # return result[1]
 
-    # def wrapper(self, board, alpha, beta, color, depth, i, result_list):
-    #     result = -self.alpha_beta(board, alpha, beta, color, depth)[0]
-    #     # print("The result would be {}".format(result))
-    #     result_list[i] = result
-    #     # print("Current result vector would be {}".format(result_list))
+    def wrapper(self, board, alpha, beta, color, depth, i, result_list):
+        result = -self.alpha_beta(board, alpha, beta, color, depth)[0]
+        # print("The result would be {}".format(result))
+        result_list[i] = result
+        # print("Current result vector would be {}".format(result_list))
 
     def evaluate(self, board, color, oppo_color):
         weight = self.weight
