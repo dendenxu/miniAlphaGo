@@ -3,7 +3,7 @@ from random import shuffle
 
 
 class AIPlayer:
-    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3, max_width=10):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3, max_width=8):
         self.action = None
         self.color = color
         self.oppo_color = "X" if color is "O" else "O"
@@ -11,14 +11,14 @@ class AIPlayer:
         self.small_val = small_val
         self.depth = max_depth
         self.max_width = max_width
-        self.weight = (np.asarray([[90, -30, 10, 10, 10, 10, -30, 90],
-                                   [-30, -80, 5, 5, 5, 5, -80, -30],
+        self.weight = (np.asarray([[150, -60, 10, 10, 10, 10, -60, 150],
+                                   [-60, -80, 5, 5, 5, 5, -80, -60],
                                    [10, 5, 1, 1, 1, 1, 5, 10],
                                    [10, 5, 1, 1, 1, 1, 5, 10],
                                    [10, 5, 1, 1, 1, 1, 5, 10],
                                    [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [-30, -80, 5, 5, 5, 5, -80, -30],
-                                   [90, -30, 10, 10, 10, 10, -30, 90]]))
+                                   [-60, -80, 5, 5, 5, 5, -80, -60],
+                                   [150, -60, 10, 10, 10, 10, -60, 150]]))
         self.factor = abs(np.average(np.average(self.weight)))
         self.history = np.tile(np.arange(64), 128).reshape((2, 64, 64))
 

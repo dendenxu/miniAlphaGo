@@ -8,7 +8,7 @@ if __name__ == '__main__':
     import MultiCore
     import SingleCore
 
-    max_depth_black = 2
+    max_depth_black = 5
     max_depth_white = 5
     while True:
         # 人类玩家黑棋初始化
