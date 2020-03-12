@@ -19,7 +19,7 @@ class AIPlayer:
         start_time = time.perf_counter()
         result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)
         end_time = time.perf_counter()
-        print("Time used in calculating result is: {}".format(end_time - middle_time))
+        print("Time used in calculating result is: {}".format(end_time - start_time))
         # print(result)
         return result[1]
 
