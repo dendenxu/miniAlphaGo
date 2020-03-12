@@ -1,47 +1,73 @@
 import numpy as np
 from board import Board
+from copy import deepcopy
+from threading import Thread
+
+
+class ThreadWithReturnValue(Thread):
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs={}, Verbose=None):
+        Thread.__init__(self, group, target, name, args, kwargs)
+        self._return = None
+
+    def run(self):
+        # print(type(self._target))
+        if self._target is not None:
+            self._return = self._target(*self._args,
+                                        **self._kwargs)
+
+    def join(self, *args):
+        Thread.join(self, *args)
+        return self._return
 
 
 class AIPlayer:
-    def __init__(self, color, max_val=1e10, min_val=-1e10, max_depth=3):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3):
         self.action = None
         self.color = color
         self.oppo_color = "X" if color is "O" else "O"
-        self.max_val = max_val
-        self.min_val = min_val
+        self.big_val = big_val
+        self.small_val = small_val
         self.depth = max_depth
-        self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90], [-60, -80, 5, 5, 5, 5, -80, -60], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [10, 5, 1, 1, 1, 1, 5, 10], [-60, -80, 5, 5, 5, 5, -80, -60], [90, -60, 10, 10, 10, 10, -60, 90], ])
+        self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90],
+                                  [-60, -80, 5, 5, 5, 5, -80, -60],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [-60, -80, 5, 5, 5, 5, -80, -60],
+                                  [90, -60, 10, 10, 10, 10, -60, 90], ])
 
     def get_move(self, board):
-        if self.color == 'X':
-            player_name = '黑棋'
-        else:
-            player_name = '白棋'
+        player_name = '黑棋' if self.color == 'X' else '白棋'
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
-        return self.alpha_beta(board, self.min_val, self.max_val, self.color, self.depth)[1]
-
-    def sign_color(self, color):
-        return 1 if color is self.color else - 1
-
-    def value_color(self, color):
-        return 1 if color is self.color else (-1 if color is self.oppo_color(self.color) else 0)
+        moves = list(board.get_legal_actions(self.color))
+        pool = []
+        for _, move in enumerate(moves):
+            temp_board = deepcopy(board)
+            temp_board._move(move, self.color)
+            pool.append(ThreadWithReturnValue(target=self.alpha_beta, args=(temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth)))
+            pool[-1].start()
+        action = None
+        result = np.zeros((len(moves)))
+        for i, _ in enumerate(moves):
+            result[i] = -pool[i].join()[0]
+        action = moves[np.argmax(result)]
+        return action
 
     def evaluate(self, board, color):
-        _board = np.asarray([[1 if (i is self.color) else (-1 if i is self.oppo_color else 0) for i in j] for j in board._board])
+        _board = np.asarray([[1 if (piece is self.color) else (-1 if piece is self.oppo_color else 0) for piece in line] for line in board._board])
         _board *= self.weight
         _board = np.sum(_board)
-        # print("_board is\n {}".format(_board))
         return (1 if color is self.color else - 1) * _board
 
     def alpha_beta(self, board, alpha, beta, color, depth):
-        oppo_color = "X" if color is "O" else "O"
-        # print(color)
         action = None
-        max_val = self.min_val
+        oppo_color = "X" if color is "O" else "O"
+        max_val = self.small_val
         moves = list(board.get_legal_actions(color))
         oppo_moves = list(board.get_legal_actions(oppo_color))
-        movability = len(moves) - len(oppo_moves)
-        movability *= 1 if color is self.color else - 1
+        movability = len(moves) - len(oppo_moves) * (1 if color is self.color else - 1)
         movability *= np.average(np.average(self.weight))
         if depth <= 0:
             return self.evaluate(board, color) + movability, action
