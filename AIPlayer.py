@@ -2,24 +2,7 @@ import numpy as np
 import time
 from board import Board
 from copy import deepcopy
-from threading import Thread
-
-
-# class ThreadWithReturnValue(Thread):
-#     def __init__(self, group=None, target=None, name=None,
-#                  args=(), kwargs={}, Verbose=None):
-#         Thread.__init__(self, group, target, name, args, kwargs)
-#         self._return = None
-
-#     def run(self):
-#         # print(type(self._target))
-#         if self._target is not None:
-#             self._return = self._target(*self._args,
-#                                         **self._kwargs)
-
-#     def join(self, *args):
-#         Thread.join(self, *args)
-#         return self._return
+from multiprocessing import Process, Manager
 
 
 class AIPlayer:
@@ -30,46 +13,57 @@ class AIPlayer:
         self.big_val = big_val
         self.small_val = small_val
         self.depth = max_depth
-        self.weight = np.asarray([[90, -30, 10, 10, 10, 10, -30, 90],
-                                  [-30, -80, 5, 5, 5, 5, -80, -30],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [-30, -80, 5, 5, 5, 5, -80, -30],
-                                  [90, -30, 10, 10, 10, 10, -30, 90]])
+        self.weight = (np.asarray([[90, -30, 10, 10, 10, 10, -30, 90],
+                                   [-30, -80, 5, 5, 5, 5, -80, -30],
+                                   [10, 5, 1, 1, 1, 1, 5, 10],
+                                   [10, 5, 1, 1, 1, 1, 5, 10],
+                                   [10, 5, 1, 1, 1, 1, 5, 10],
+                                   [10, 5, 1, 1, 1, 1, 5, 10],
+                                   [-30, -80, 5, 5, 5, 5, -80, -30],
+                                   [90, -30, 10, 10, 10, 10, -30, 90]])
+                       )
+        #    * (np.random.random() * 0.5 + 0.75)).astype(int)
         self.factor = abs(np.average(np.average(self.weight)))
 
     def get_move(self, board):
         player_name = '黑棋' if self.color == 'X' else '白棋'
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
         # start_time = time.perf_counter()
-        # moves = list(board.get_legal_actions(self.color))
-        # pool = []
-        # for _, move in enumerate(moves):
-        #     temp_board = deepcopy(board)
-        #     temp_board._move(move, self.color)
-        #     pool.append(ThreadWithReturnValue(target=self.alpha_beta, args=(temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth)))
-        #     pool[-1].start()
-        # action = None
-        # result = np.zeros((len(moves)))
+        moves = list(board.get_legal_actions(self.color))
+        jobs = []
+        manager = Manager()
+        result_list = manager.list([0 for _ in enumerate(moves)])
+        for i, move in enumerate(moves):
+            temp_board = deepcopy(board)
+            temp_board._move(move, self.color)
+            p = Process(target=self.wrapper, args=(temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth - 1, i, result_list))
+            jobs.append(p)
+            p.start()
+        
+        action = None
         # middle_time = time.perf_counter()
         # print("Time used in constructing the thread is: {}".format(middle_time - start_time))
-        # for i, _ in enumerate(moves):
-        #     result[i] = -pool[i].join()[0]
-        # action = moves[np.argmax(result)]
+        for job in jobs:
+            job.join()
+        action = moves[np.argmax(result_list)]
         # end_time = time.perf_counter()
         # print("Time used in calculating result is: {}".format(end_time - middle_time))
         # print(action)
         # print(moves)
+        # print(result_list)
+        return action
+        # start_time = time.perf_counter()
+        # result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)
+        # end_time = time.perf_counter()
+        # print("Time used in calculating result is: {}".format(end_time - start_time))
         # print(result)
-        # return action
-        start_time = time.perf_counter()
-        result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)
-        end_time = time.perf_counter()
-        print("Time used in calculating result is: {}".format(end_time - start_time))
-        # print(result)
-        return result[1]
+        # return result[1]
+
+    def wrapper(self, board, alpha, beta, color, depth, i, result_list):
+        result = -self.alpha_beta(board, alpha, beta, color, depth)[0]
+        # print("The result would be {}".format(result))
+        result_list[i] = result
+        # print("Current result vector would be {}".format(result_list))
 
     def evaluate(self, board, color, oppo_color):
         weight = self.weight
@@ -78,22 +72,22 @@ class AIPlayer:
         # print(_board)
         # print(_board > 0)
         # print(np.invert(_board < 0))
-        # sep_board = np.stack((_board > 1, np.negative(np.int(_board < -1))))
+        sep_board = np.stack(((_board > 1).astype(int), np.negative((_board < -1).astype(int))))
         # print(sep_board)
-        # stability = 0
-        # for i in range(2):
-        #     if sep_board[0, 0, i]:
-        #         stability += np.sum(sep_board[0, 0::-1, i])
-        #     if sep_board[0, -1, i]:
-        #         stability += np.sum(sep_board[0::-1, -1, i])
-        #     if sep_board[-1, 0, i]:
-        #         stability += np.sum(sep_board[-1, 1::, i])
-        #     if sep_board[-1, -1, i]:
-        #         stability += np.sum(sep_board[1::, 0, i])
+        stability = 0
+        for i in range(2):
+            if sep_board[0, 0, i]:
+                stability += np.sum(sep_board[0, 0::-1, i])
+            if sep_board[0, -1, i]:
+                stability += np.sum(sep_board[0::-1, -1, i])
+            if sep_board[-1, 0, i]:
+                stability += np.sum(sep_board[-1, 1::, i])
+            if sep_board[-1, -1, i]:
+                stability += np.sum(sep_board[1::, 0, i])
         # print(stability)
         _board *= weight
         _board = np.sum(_board)
-        # _board += stability
+        _board += stability * self.factor
         return _board
 
     def alpha_beta(self, board, alpha, beta, color, depth):
