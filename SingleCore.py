@@ -51,12 +51,12 @@ class AIPlayer:
         moves = list(board.get_legal_actions(color))
         oppo_moves = list(board.get_legal_actions(oppo_color))
         if depth <= 0:
-            movability = (len(moves) - len(oppo_moves)) * self.factor
-            return self.evaluate(board, color, oppo_color) + movability, action
+            mobility = (len(moves) - len(oppo_moves)) * self.factor
+            return self.evaluate(board, color, oppo_color) + mobility, action
         if len(moves) is 0:
             if len(oppo_moves) is 0:
-                movability = (len(moves) - len(oppo_moves)) * self.factor
-                return self.evaluate(board, color, oppo_color) + movability, action
+                mobility = (len(moves) - len(oppo_moves)) * self.factor
+                return self.evaluate(board, color, oppo_color) + mobility, action
             return -self.alpha_beta(board, -beta, -alpha, oppo_color, depth)[0], action
         for move in moves:
             flipped = board._move(move, color)

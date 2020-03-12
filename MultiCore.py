@@ -7,7 +7,7 @@ class AIPlayer:
     def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3):
         self.action = None
         self.color = color
-        self.oppo_color = "X" if color is "O" else "O"
+        self.opp_color = "X" if color is "O" else "O"
         self.big_val = big_val
         self.small_val = small_val
         self.depth = max_depth
@@ -26,20 +26,17 @@ class AIPlayer:
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
         moves = list(board.get_legal_actions(self.color))
         jobs = []
-        manager = Manager()
-        result_list = manager.list([0 for _ in enumerate(moves)])
+        result_list = Manager().list([0 for _ in enumerate(moves)])
         for i, move in enumerate(moves):
             temp_board = deepcopy(board)
             temp_board._move(move, self.color)
             p = Process(target=self.wrapper, args=(
-                temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth - 1, i, result_list))
+                temp_board, -self.big_val, -self.small_val, self.opp_color, self.depth - 1, i, result_list))
             jobs.append(p)
             p.start()
-        action = None
         for job in jobs:
             job.join()
-        action = moves[np.argmax(result_list)]
-        return action
+        return moves[np.argmax(result_list)]
 
     def wrapper(self, board, alpha, beta, color, depth, i, result_list):
         result = -self.alpha_beta(board, alpha, beta, color, depth)[0]
@@ -67,21 +64,21 @@ class AIPlayer:
 
     def alpha_beta(self, board, alpha, beta, color, depth):
         action = None
-        oppo_color = "X" if color is "O" else "O"
+        opp_color = "X" if color is "O" else "O"
         max_val = self.small_val
         moves = list(board.get_legal_actions(color))
-        oppo_moves = list(board.get_legal_actions(oppo_color))
+        opp_moves = list(board.get_legal_actions(opp_color))
         if depth <= 0:
-            movability = (len(moves) - len(oppo_moves)) * self.factor
-            return self.evaluate(board, color, oppo_color) + movability, action
+            mobility = (len(moves) - len(opp_moves)) * self.factor
+            return self.evaluate(board, color, opp_color) + mobility, action
         if len(moves) is 0:
-            if len(oppo_moves) is 0:
-                movability = (len(moves) - len(oppo_moves)) * self.factor
-                return self.evaluate(board, color, oppo_color) + movability, action
-            return -self.alpha_beta(board, -beta, -alpha, oppo_color, depth)[0], action
+            if len(opp_moves) is 0:
+                mobility = (len(moves) - len(opp_moves)) * self.factor
+                return self.evaluate(board, color, opp_color) + mobility, action
+            return -self.alpha_beta(board, -beta, -alpha, opp_color, depth)[0], action
         for move in moves:
             flipped = board._move(move, color)
-            val = -self.alpha_beta(board, -beta, -alpha, oppo_color, depth - 1)[0]
+            val = -self.alpha_beta(board, -beta, -alpha, opp_color, depth - 1)[0]
             board.backpropagation(move, flipped, color)
             if val > max_val:
                 max_val = val
