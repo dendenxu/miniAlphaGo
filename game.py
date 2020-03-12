@@ -5,6 +5,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 import datetime
 from board import Board
 from copy import deepcopy
+import time
 
 
 class Game(object):
@@ -92,7 +93,7 @@ class Game(object):
             # 切换当前玩家,如果当前玩家是 None 或者白棋 white_player，则返回黑棋 black_player;
             #  否则返回 white_player。
             self.current_player = self.switch_player(self.black_player, self.white_player)
-            start_time = datetime.datetime.now()
+            start_time = time.perf_counter()
             # 当前玩家对棋盘进行思考后，得到落子位置
             # 判断当前下棋方
             color = "X" if self.current_player == self.black_player else "O"
@@ -139,7 +140,7 @@ class Game(object):
                 break
 
             # 结束时间
-            end_time = datetime.datetime.now()
+            end_time = time.perf_counter()
             if board != self.board._board:
                 # 修改棋盘，结束游戏！
                 winner, diff = self.force_loss(is_board=True)
@@ -153,8 +154,8 @@ class Game(object):
                 continue
             else:
                 # 统计一步所用的时间
-                es_time = (end_time - start_time).seconds
-                if es_time > 6000:
+                es_time = end_time - start_time
+                if es_time > 60000:  # NOTE: CHANGE ME!!!
                     # 该步超过60秒则结束比赛。
                     print('\n{} 思考超过 60s'.format(self.current_player))
                     winner, diff = self.force_loss(is_timeout=True)

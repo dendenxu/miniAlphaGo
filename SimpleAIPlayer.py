@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from board import Board
 
 
@@ -15,7 +16,12 @@ class AIPlayer:
     def get_move(self, board):
         player_name = '黑棋' if self.color == 'X' else '白棋'
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
-        return self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)[1]
+        start_time = time.perf_counter()
+        result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)
+        end_time = time.perf_counter()
+        print("Time used in calculating result is: {}".format(end_time - middle_time))
+        # print(result)
+        return result[1]
 
     def evaluate(self, board, color):
         _board = np.asarray([[1 if (piece is self.color) else (-1 if piece is self.oppo_color else 0) for piece in line] for line in board._board])
