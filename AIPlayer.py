@@ -1,24 +1,5 @@
 import numpy as np
 from board import Board
-from copy import deepcopy
-from threading import Thread
-
-
-class ThreadWithReturnValue(Thread):
-    def __init__(self, group=None, target=None, name=None,
-                 args=(), kwargs={}, Verbose=None):
-        Thread.__init__(self, group, target, name, args, kwargs)
-        self._return = None
-
-    def run(self):
-        # print(type(self._target))
-        if self._target is not None:
-            self._return = self._target(*self._args,
-                                        **self._kwargs)
-
-    def join(self, *args):
-        Thread.join(self, *args)
-        return self._return
 
 
 class AIPlayer:
@@ -41,19 +22,7 @@ class AIPlayer:
     def get_move(self, board):
         player_name = '黑棋' if self.color == 'X' else '白棋'
         print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
-        moves = list(board.get_legal_actions(self.color))
-        pool = []
-        for _, move in enumerate(moves):
-            temp_board = deepcopy(board)
-            temp_board._move(move, self.color)
-            pool.append(ThreadWithReturnValue(target=self.alpha_beta, args=(temp_board, -self.big_val, -self.small_val, self.oppo_color, self.depth)))
-            pool[-1].start()
-        action = None
-        result = np.zeros((len(moves)))
-        for i, _ in enumerate(moves):
-            result[i] = -pool[i].join()[0]
-        action = moves[np.argmax(result)]
-        return action
+        return self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth)[1]
 
     def evaluate(self, board, color):
         _board = np.asarray([[1 if (piece is self.color) else (-1 if piece is self.oppo_color else 0) for piece in line] for line in board._board])
