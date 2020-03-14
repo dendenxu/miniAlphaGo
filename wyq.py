@@ -114,11 +114,11 @@ class AIPlayer:
             player_name = '黑棋'
         else:
             player_name = '白棋'
-        print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
+        # print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
 
         # -----------------请实现你的算法代码--------------------------------------
 
         _, action = self.move_alpha_beta(board, self.minsize, self.maxsize, self.color, self.max_depth)
         # ------------------------------------------------------------------------
-        print(action)
+        # print(action)
         return action

@@ -3,7 +3,7 @@ from random import shuffle
 
 
 class AIPlayer:
-    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3, max_width=13):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=6, max_width=10):
         self.action = None
         self.color = color
         self.oppo_color = "X" if color is "O" else "O"
@@ -24,7 +24,7 @@ class AIPlayer:
 
     def get_move(self, board):
         player_name = '黑棋' if self.color == 'X' else '白棋'
-        print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
+        # print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
         return self.alpha_beta(board, self.small_val, self.big_val,
                                self.color, self.depth, board.count("X") + board.count("O"))[1]
 
@@ -70,16 +70,18 @@ class AIPlayer:
         oppo_color = "X" if color is "O" else "O"
         max_val = self.small_val
         moves = list(board.get_legal_actions(color))
+        global_depth = step + self.depth - depth
         oppo_moves = list(board.get_legal_actions(oppo_color))
         if depth <= 0:
             mobility = (len(moves) - len(oppo_moves)) * self.factor
+            if global_depth < 24:
+                return mobility, action
             return self.evaluate(board, color, oppo_color) + mobility, action
         if len(moves) is 0:
             if len(oppo_moves) is 0:
                 mobility = (len(moves) - len(oppo_moves)) * self.factor
                 return self.evaluate(board, color, oppo_color) + mobility, action
             return -self.alpha_beta(board, -beta, -alpha, oppo_color, depth, step)[0], action
-        global_depth = step + self.depth - depth
         moves = self.history_sort(board, moves, color, global_depth)
         # moves = moves[0:min(len(moves), self.max_width - depth)]
         for move in moves:

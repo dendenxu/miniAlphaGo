@@ -205,6 +205,124 @@ class Game(object):
 
         return is_over
 
+
+    def run_quite(self):
+        """
+                运行游戏
+                :return:
+                """
+        # 定义统计双方下棋时间
+        total_time = {"X": 0, "O": 0}
+        # 定义双方每一步下棋时间
+        step_time = {"X": 0, "O": 0}
+        # 初始化胜负结果和棋子差
+        winner = None
+        diff = -1
+
+        # 游戏开始
+        # print('\n=====开始游戏!=====\n')
+        # 棋盘初始化
+        # self.board.display(step_time, total_time)
+        while True:
+            # 切换当前玩家,如果当前玩家是 None 或者白棋 white_player，则返回黑棋 black_player;
+            #  否则返回 white_player。
+            self.current_player = self.switch_player(self.black_player, self.white_player)
+            start_time = time.perf_counter()
+            # 当前玩家对棋盘进行思考后，得到落子位置
+            # 判断当前下棋方
+            color = "X" if self.current_player == self.black_player else "O"
+            # 获取当前下棋方合法落子位置
+            legal_actions = list(self.board.get_legal_actions(color))
+            # print("%s合法落子坐标列表："%color,legal_actions)
+            if len(legal_actions) == 0:
+                # 判断游戏是否结束
+                if self.game_over():
+                    # 游戏结束，双方都没有合法位置
+                    winner, diff = self.board.get_winner()  # 得到赢家 0,1,2
+                    break
+                else:
+                    # 另一方有合法位置,切换下棋方
+                    continue
+
+            board = deepcopy(self.board._board)
+
+            # legal_actions 不等于 0 则表示当前下棋方有合法落子位置
+            try:
+                for i in range(0, 3):
+                    # 获取落子位置
+                    action = func_timeout(60, self.current_player.get_move,
+                                          kwargs={'board': self.board})
+
+                    # 如果 action 是 Q 则说明人类想结束比赛
+                    if action == "Q":
+                        # 说明人类想结束游戏，即根据棋子个数定输赢。
+                        break
+                    if action not in legal_actions:
+                        # 判断当前下棋方落子是否符合合法落子,如果不合法,则需要对方重新输入
+                        print("你落子不符合规则,请重新落子！")
+                        continue
+                    else:
+                        # 落子合法则直接 break
+                        break
+                else:
+                    # 落子3次不合法，结束游戏！
+                    winner, diff = self.force_loss(is_legal=True)
+                    break
+            except FunctionTimedOut:
+                # 落子超时，结束游戏
+                winner, diff = self.force_loss(is_timeout=True)
+                break
+
+            # 结束时间
+            end_time = time.perf_counter()
+            if board != self.board._board:
+                # 修改棋盘，结束游戏！
+                winner, diff = self.force_loss(is_board=True)
+                break
+            if action == "Q":
+                # 说明人类想结束游戏，即根据棋子个数定输赢。
+                winner, diff = self.board.get_winner()  # 得到赢家 0,1,2
+                break
+
+            if action is None:
+                continue
+            else:
+                # 统计一步所用的时间
+                es_time = end_time - start_time
+                if es_time > 60000:  # NOTE: CHANGE ME!!!
+                    # 该步超过60秒则结束比赛。
+                    print('\n{} 思考超过 60s'.format(self.current_player))
+                    winner, diff = self.force_loss(is_timeout=True)
+                    break
+
+                # 当前玩家颜色，更新棋局
+                self.board._move(action, color)
+                # 统计每种棋子下棋所用总时间
+                if self.current_player == self.black_player:
+                    # 当前选手是黑棋一方
+                    step_time["X"] = es_time
+                    total_time["X"] += es_time
+                else:
+                    step_time["O"] = es_time
+                    total_time["O"] += es_time
+                # 显示当前棋盘
+                # self.board.display(step_time, total_time)
+
+                # 判断游戏是否结束
+                if self.game_over():
+                    # 游戏结束
+                    winner, diff = self.board.get_winner()  # 得到赢家 0,1,2
+                    break
+
+        # print('\n=====游戏结束!=====\n')
+        self.board.display(step_time, total_time)
+        # self.print_winner(winner)
+
+        # 返回'black_win','white_win','draw',棋子数差
+        if winner is not None and diff > -1:
+            result = {0: 'black_win', 1: 'white_win', 2: 'draw'}[winner]
+
+        return winner, diff
 #
 #
 # if __name__ == '__main__':
