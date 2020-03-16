@@ -4,43 +4,45 @@ from multiprocessing import Process, Manager
 
 
 class AIPlayer:
-    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=3):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=6, max_width=12):
         self.action = None
         self.color = color
-        self.opp_color = "X" if color is "O" else "O"
+        self.oppo_color = "X" if color is "O" else "O"
         self.big_val = big_val
         self.small_val = small_val
         self.depth = max_depth
-        self.weight = (np.asarray([[90, -30, 10, 10, 10, 10, -30, 90],
-                                   [-30, -80, 5, 5, 5, 5, -80, -30],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                   [-30, -80, 5, 5, 5, 5, -80, -30],
-                                   [90, -30, 10, 10, 10, 10, -30, 90]]))
-        self.factor = abs(np.average(np.average(self.weight)))
+        self.max_width = max_width
+        self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90],
+                                  [-60, -80, 5, 5, 5, 5, -80, 60],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [-60, -80, 5, 5, 5, 5, -80, 60],
+                                  [90, -60, 10, 10, 10, 10, -60, 90]])
+        self.factor = abs(np.average(self.weight)) * 100
 
     def get_move(self, board):
-        player_name = '黑棋' if self.color == 'X' else '白棋'
-        print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
         moves = list(board.get_legal_actions(self.color))
         jobs = []
         result_list = Manager().list([0 for _ in enumerate(moves)])
+        count = board.count("X") + board.count("O")
         for i, move in enumerate(moves):
             temp_board = deepcopy(board)
             temp_board._move(move, self.color)
             p = Process(target=self.wrapper, args=(
-                temp_board, -self.big_val, -self.small_val, self.opp_color, self.depth - 1, i, result_list))
+                temp_board, self.small_val, self.big_val, self.oppo_color, self.depth - 1,
+                count, i, result_list))
             jobs.append(p)
             p.start()
         for job in jobs:
             job.join()
+        print(result_list)
+        print(moves)
         return moves[np.argmax(result_list)]
 
-    def wrapper(self, board, alpha, beta, color, depth, i, result_list):
-        result = -self.alpha_beta(board, alpha, beta, color, depth)[0]
-        result_list[i] = result
+    def wrapper(self, board, alpha, beta, color, depth, step, i, result_list):
+        result_list[i] = -self.alpha_beta(board, alpha, beta, color, depth, step)[0]
 
     def evaluate(self, board, color, oppo_color):
         weight = self.weight
@@ -49,36 +51,60 @@ class AIPlayer:
         sep_board = np.stack(((_board == 1).astype(int), np.negative((_board == -1).astype(int))))
         stability = 0
         for i in range(2):
-            if sep_board[0, 0, i]:
-                stability += np.sum(sep_board[0, 0::-1, i])
-            if sep_board[0, -1, i]:
-                stability += np.sum(sep_board[0::-1, -1, i])
-            if sep_board[-1, 0, i]:
-                stability += np.sum(sep_board[-1, 1::, i])
-            if sep_board[-1, -1, i]:
-                stability += np.sum(sep_board[1::, 0, i])
+            if sep_board[i, 0, 0]:
+                stability += np.sum(sep_board[i, 0, 0:-1])
+                stability += np.sum(sep_board[i, 1::, 0])
+                if sep_board[i, 1, 1]:
+                    stability += np.sum(sep_board[i, 1, 1:-2])
+                    stability += np.sum(sep_board[i, 2:-1, 1])
+            if sep_board[i, 0, -1]:
+                stability += np.sum(sep_board[i, 0:-1, -1])
+                stability += np.sum(sep_board[i, 0, 0:-1])
+                if sep_board[i, 1, -2]:
+                    stability += np.sum(sep_board[i, 1:-2, -2])
+                    stability += np.sum(sep_board[i, 1, 1:-2])
+            if sep_board[i, -1, -1]:
+                stability += np.sum(sep_board[i, -1, 1::])
+                stability += np.sum(sep_board[i, 0:-1, -1])
+                if sep_board[i, -2, -2]:
+                    stability += np.sum(sep_board[i, -2, 2:-1])
+                    stability += np.sum(sep_board[i, 1:-2, -2])
+            if sep_board[i, -1, 0]:
+                stability += np.sum(sep_board[i, 1::, 0])
+                stability += np.sum(sep_board[i, -1, 1::])
+                if sep_board[i, -2, 1]:
+                    stability += np.sum(sep_board[i, 2:-1, 1])
+                    stability += np.sum(sep_board[i, -2, 2:-1])
+
         _board *= weight
         _board = np.sum(_board)
         _board += stability * self.factor
-        return _board
+        return _board if np.sum(sep_board[0, :, :]) else self.small_val
 
-    def alpha_beta(self, board, alpha, beta, color, depth):
+    def alpha_beta(self, board, alpha, beta, color, depth, step):
         action = None
-        opp_color = "X" if color is "O" else "O"
+        oppo_color = "X" if color is "O" else "O"
         max_val = self.small_val
         moves = list(board.get_legal_actions(color))
-        opp_moves = list(board.get_legal_actions(opp_color))
-        if depth <= 0:
-            mobility = (len(moves) - len(opp_moves)) * self.factor
-            return self.evaluate(board, color, opp_color) + mobility, action
+        global_depth = step + self.depth - depth
+        # total_count = board.count("X") + board.count("O")
+        # print(global_depth, total_count)
+        oppo_moves = list(board.get_legal_actions(oppo_color))
         if len(moves) is 0:
-            if len(opp_moves) is 0:
-                mobility = (len(moves) - len(opp_moves)) * self.factor
-                return self.evaluate(board, color, opp_color) + mobility, action
-            return -self.alpha_beta(board, -beta, -alpha, opp_color, depth)[0], action
+            if len(oppo_moves) is 0:
+                mobility = (len(moves) - len(oppo_moves)) * self.factor
+                return self.evaluate(board, color, oppo_color) + mobility, action
+            return -self.alpha_beta(board, -beta, -alpha, oppo_color, depth, step)[0], action
+        if depth <= 0:
+            mobility = (len(moves) - len(oppo_moves)) * self.factor
+            if global_depth < 22:
+                return mobility, action
+            return self.evaluate(board, color, oppo_color) + mobility, action
+        # moves = self.history_sort(board, moves, color, global_depth)
+        # moves = moves[::min(len(moves), self.max_width)]
         for move in moves:
             flipped = board._move(move, color)
-            val = -self.alpha_beta(board, -beta, -alpha, opp_color, depth - 1)[0]
+            val = -self.alpha_beta(board, -beta, -alpha, oppo_color, depth - 1, step)[0]
             board.backpropagation(move, flipped, color)
             if val > max_val:
                 max_val = val
@@ -86,6 +112,8 @@ class AIPlayer:
             if max_val > alpha:
                 if max_val >= beta:
                     action = move
+                    # self.reward_move(board, action, color, global_depth, True)
                     return max_val, action
                 alpha = max_val
+        # self.reward_move(board, action, color, global_depth, False)
         return max_val, action

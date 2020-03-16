@@ -12,15 +12,18 @@ if __name__ == '__main__':
     max_depth_black = 1
     max_depth_white = 6
     for i in range(1, 6):
+    # while True:
         # 人类玩家黑棋初始化
         # black_player = HumanPlayer("X")
         # black_player = RandomPlayer("X")
         # black_player = SimpleAIPlayer.AIPlayer("X", max_depth=max_depth_black)
         # black_player = AIPlayer.AIPlayer("X", max_depth=3)
         black_player = wyq.AIPlayer("X", max_depth=i)
+        # black_player = wyq.AIPlayer("X", max_depth=max_depth_black)
         # black_player = SingleCore.AIPlayer("X", max_depth=max_depth_black)
 
         # AI 玩家 白棋初始化
+        # white_player = MultiCore.AIPlayer("O", max_depth=max_depth_white)
         white_player = SingleCore.AIPlayer("O", max_depth=max_depth_white)
         # white_player = wyq.AIPlayer("O", max_depth=max_depth_white)
         # white_player = SimpleAIPlayer.AIPlayer("O")
@@ -29,8 +32,9 @@ if __name__ == '__main__':
         game = Game(black_player, white_player)
 
         # 开始下棋
+        # game.run()
         print("Current max depth: {} : {}".format(i, max_depth_white))
-        winner, diff = game.run_quite()
+        print(game.run_quite())
         # again = input("兄贵，再试一次？（狗头）：yes/no/change max_depth: ")
         # if again[0] == 'N' or again[0] == 'n':
         #     break

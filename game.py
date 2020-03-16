@@ -116,7 +116,7 @@ class Game(object):
             try:
                 for i in range(0, 3):
                     # 获取落子位置
-                    action = func_timeout(60, self.current_player.get_move,
+                    action = func_timeout(6000, self.current_player.get_move,
                                           kwargs={'board': self.board})
 
                     # 如果 action 是 Q 则说明人类想结束比赛
@@ -155,7 +155,7 @@ class Game(object):
             else:
                 # 统计一步所用的时间
                 es_time = end_time - start_time
-                if es_time > 60000:  # NOTE: CHANGE ME!!!
+                if es_time > 6000:  # NOTE: CHANGE ME!!!
                     # 该步超过60秒则结束比赛。
                     print('\n{} 思考超过 60s'.format(self.current_player))
                     winner, diff = self.force_loss(is_timeout=True)
@@ -250,7 +250,7 @@ class Game(object):
             try:
                 for i in range(0, 3):
                     # 获取落子位置
-                    action = func_timeout(60, self.current_player.get_move,
+                    action = func_timeout(6000, self.current_player.get_move,
                                           kwargs={'board': self.board})
 
                     # 如果 action 是 Q 则说明人类想结束比赛
@@ -289,7 +289,7 @@ class Game(object):
             else:
                 # 统计一步所用的时间
                 es_time = end_time - start_time
-                if es_time > 60000:  # NOTE: CHANGE ME!!!
+                if es_time > 6000:  # NOTE: CHANGE ME!!!
                     # 该步超过60秒则结束比赛。
                     print('\n{} 思考超过 60s'.format(self.current_player))
                     winner, diff = self.force_loss(is_timeout=True)
