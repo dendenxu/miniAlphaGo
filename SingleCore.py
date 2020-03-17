@@ -72,7 +72,8 @@ class AIPlayer:
         moves = list(board.get_legal_actions(color))
         global_depth = step + self.depth - depth
         # total_count = board.count("X") + board.count("O")
-        # print(global_depth, total_count)
+        # print(global_depth, total_count, step, depth)
+        # print(moves)
         oppo_moves = list(board.get_legal_actions(oppo_color))
         if len(moves) is 0:
             if len(oppo_moves) is 0:

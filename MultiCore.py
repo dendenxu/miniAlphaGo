@@ -25,14 +25,14 @@ class AIPlayer:
     def get_move(self, board):
         moves = list(board.get_legal_actions(self.color))
         jobs = []
-        result_list = Manager().list([0 for _ in enumerate(moves)])
-        count = board.count("X") + board.count("O")
+        result_list = Manager().list(range(len(moves)))
+        step = board.count("X") + board.count("O")
         for i, move in enumerate(moves):
             temp_board = deepcopy(board)
             temp_board._move(move, self.color)
             p = Process(target=self.wrapper, args=(
                 temp_board, self.small_val, self.big_val, self.oppo_color, self.depth - 1,
-                count, i, result_list))
+                step, i, result_list))
             jobs.append(p)
             p.start()
         for job in jobs:
@@ -88,7 +88,8 @@ class AIPlayer:
         moves = list(board.get_legal_actions(color))
         global_depth = step + self.depth - depth
         # total_count = board.count("X") + board.count("O")
-        # print(global_depth, total_count)
+        # print(global_depth, total_count, step, depth)
+        # print(moves)
         oppo_moves = list(board.get_legal_actions(oppo_color))
         if len(moves) is 0:
             if len(oppo_moves) is 0:
@@ -100,7 +101,6 @@ class AIPlayer:
             if global_depth < 22:
                 return mobility, action
             return self.evaluate(board, color, oppo_color) + mobility, action
-        # moves = self.history_sort(board, moves, color, global_depth)
         # moves = moves[::min(len(moves), self.max_width)]
         for move in moves:
             flipped = board._move(move, color)
@@ -112,8 +112,6 @@ class AIPlayer:
             if max_val > alpha:
                 if max_val >= beta:
                     action = move
-                    # self.reward_move(board, action, color, global_depth, True)
                     return max_val, action
                 alpha = max_val
-        # self.reward_move(board, action, color, global_depth, False)
         return max_val, action
