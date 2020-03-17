@@ -19,12 +19,11 @@ class AIPlayer:
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [-60, -80, 5, 5, 5, 5, -80, 60],
                                   [90, -60, 10, 10, 10, 10, -60, 90]])
-        self.factor = abs(np.average(self.weight)) * 100
+        self.factor = abs(np.average(self.weight)) * 50
         self.history = np.tile(np.arange(64), 128).reshape((2, 64, 64))
 
     def get_move(self, board):
-        result = self.alpha_beta(board, self.small_val, self.big_val,
-                               self.color, self.depth, board.count("X") + board.count("O"))
+        result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth, board.count("X") + board.count("O"))
         print(result)
         return result[1]
 
@@ -36,29 +35,21 @@ class AIPlayer:
         stability = 0
         for i in range(2):
             if sep_board[i, 0, 0]:
-                stability += np.sum(sep_board[i, 0, 0:-1])
-                stability += np.sum(sep_board[i, 1::, 0])
+                stability += np.sum(sep_board[i, 0, 0:-1]) + np.sum(sep_board[i, 1::, 0])
                 if sep_board[i, 1, 1]:
-                    stability += np.sum(sep_board[i, 1, 1:-2])
-                    stability += np.sum(sep_board[i, 2:-1, 1])
+                    stability += np.sum(sep_board[i, 1, 1:-2]) + np.sum(sep_board[i, 2:-1, 1])
             if sep_board[i, 0, -1]:
-                stability += np.sum(sep_board[i, 0:-1, -1])
-                stability += np.sum(sep_board[i, 0, 0:-1])
+                stability += np.sum(sep_board[i, 0:-1, -1]) + np.sum(sep_board[i, 0, 0:-1])
                 if sep_board[i, 1, -2]:
-                    stability += np.sum(sep_board[i, 1:-2, -2])
-                    stability += np.sum(sep_board[i, 1, 1:-2])
+                    stability += np.sum(sep_board[i, 1:-2, -2]) + np.sum(sep_board[i, 1, 1:-2])
             if sep_board[i, -1, -1]:
-                stability += np.sum(sep_board[i, -1, 1::])
-                stability += np.sum(sep_board[i, 0:-1, -1])
+                stability += np.sum(sep_board[i, -1, 1::]) + np.sum(sep_board[i, 0:-1, -1])
                 if sep_board[i, -2, -2]:
-                    stability += np.sum(sep_board[i, -2, 2:-1])
-                    stability += np.sum(sep_board[i, 1:-2, -2])
+                    stability += np.sum(sep_board[i, -2, 2:-1]) + np.sum(sep_board[i, 1:-2, -2])
             if sep_board[i, -1, 0]:
-                stability += np.sum(sep_board[i, 1::, 0])
-                stability += np.sum(sep_board[i, -1, 1::])
+                stability += np.sum(sep_board[i, 1::, 0]) + np.sum(sep_board[i, -1, 1::])
                 if sep_board[i, -2, 1]:
-                    stability += np.sum(sep_board[i, 2:-1, 1])
-                    stability += np.sum(sep_board[i, -2, 2:-1])
+                    stability += np.sum(sep_board[i, 2:-1, 1]) + np.sum(sep_board[i, -2, 2:-1])
 
         _board *= weight
         _board = np.sum(_board)
@@ -71,10 +62,8 @@ class AIPlayer:
         max_val = self.small_val
         moves = list(board.get_legal_actions(color))
         global_depth = step + self.depth - depth
-        # total_count = board.count("X") + board.count("O")
-        # print(global_depth, total_count, step, depth)
-        # print(moves)
         oppo_moves = list(board.get_legal_actions(oppo_color))
+
         if len(moves) is 0:
             if len(oppo_moves) is 0:
                 mobility = (len(moves) - len(oppo_moves)) * self.factor
@@ -86,6 +75,7 @@ class AIPlayer:
                 return mobility, action
             return self.evaluate(board, color, oppo_color) + mobility, action
         moves = self.history_sort(board, moves, color, global_depth)
+
         # moves = moves[::min(len(moves), self.max_width)]
         for move in moves:
             flipped = board._move(move, color)
@@ -115,9 +105,6 @@ class AIPlayer:
         pos = x * 8 + y
         color = int(color == self.color)
         val = self.history[color, depth, pos]
-        other_pos = np.argwhere(self.history[color, depth, :] ==
-                                val - (val if best else (1 if val else 0)))
-        self.history[color, depth, other_pos], \
-        self.history[color, depth, pos] = \
-            self.history[color, depth, pos], \
-            self.history[color, depth, other_pos]
+        other_pos = np.argwhere(self.history[color, depth, :] == val - (val if best else (1 if val else 0)))
+        self.history[color, depth, other_pos], self.history[color, depth, pos] = \
+            self.history[color, depth, pos], self.history[color, depth, other_pos]

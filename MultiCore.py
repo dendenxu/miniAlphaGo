@@ -20,7 +20,7 @@ class AIPlayer:
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [-60, -80, 5, 5, 5, 5, -80, 60],
                                   [90, -60, 10, 10, 10, 10, -60, 90]])
-        self.factor = abs(np.average(self.weight)) * 100
+        self.factor = abs(np.average(self.weight)) * 50
 
     def get_move(self, board):
         moves = list(board.get_legal_actions(self.color))
@@ -31,15 +31,14 @@ class AIPlayer:
             temp_board = deepcopy(board)
             temp_board._move(move, self.color)
             p = Process(target=self.wrapper, args=(
-                temp_board, self.small_val, self.big_val, self.oppo_color, self.depth - 1,
-                step, i, result_list))
+                temp_board, self.small_val, self.big_val, self.oppo_color, self.depth - 1, step, i, result_list))
             jobs.append(p)
             p.start()
         for job in jobs:
             job.join()
-        print(result_list)
-        print(moves)
-        return moves[np.argmax(result_list)]
+        idx = np.argmax(result_list)
+        print((result_list[idx], moves[idx]))
+        return moves[idx]
 
     def wrapper(self, board, alpha, beta, color, depth, step, i, result_list):
         result_list[i] = -self.alpha_beta(board, alpha, beta, color, depth, step)[0]
@@ -52,29 +51,21 @@ class AIPlayer:
         stability = 0
         for i in range(2):
             if sep_board[i, 0, 0]:
-                stability += np.sum(sep_board[i, 0, 0:-1])
-                stability += np.sum(sep_board[i, 1::, 0])
+                stability += np.sum(sep_board[i, 0, 0:-1]) + np.sum(sep_board[i, 1::, 0])
                 if sep_board[i, 1, 1]:
-                    stability += np.sum(sep_board[i, 1, 1:-2])
-                    stability += np.sum(sep_board[i, 2:-1, 1])
+                    stability += np.sum(sep_board[i, 1, 1:-2]) + np.sum(sep_board[i, 2:-1, 1])
             if sep_board[i, 0, -1]:
-                stability += np.sum(sep_board[i, 0:-1, -1])
-                stability += np.sum(sep_board[i, 0, 0:-1])
+                stability += np.sum(sep_board[i, 0:-1, -1]) + np.sum(sep_board[i, 0, 0:-1])
                 if sep_board[i, 1, -2]:
-                    stability += np.sum(sep_board[i, 1:-2, -2])
-                    stability += np.sum(sep_board[i, 1, 1:-2])
+                    stability += np.sum(sep_board[i, 1:-2, -2]) + np.sum(sep_board[i, 1, 1:-2])
             if sep_board[i, -1, -1]:
-                stability += np.sum(sep_board[i, -1, 1::])
-                stability += np.sum(sep_board[i, 0:-1, -1])
+                stability += np.sum(sep_board[i, -1, 1::]) + np.sum(sep_board[i, 0:-1, -1])
                 if sep_board[i, -2, -2]:
-                    stability += np.sum(sep_board[i, -2, 2:-1])
-                    stability += np.sum(sep_board[i, 1:-2, -2])
+                    stability += np.sum(sep_board[i, -2, 2:-1]) + np.sum(sep_board[i, 1:-2, -2])
             if sep_board[i, -1, 0]:
-                stability += np.sum(sep_board[i, 1::, 0])
-                stability += np.sum(sep_board[i, -1, 1::])
+                stability += np.sum(sep_board[i, 1::, 0]) + np.sum(sep_board[i, -1, 1::])
                 if sep_board[i, -2, 1]:
-                    stability += np.sum(sep_board[i, 2:-1, 1])
-                    stability += np.sum(sep_board[i, -2, 2:-1])
+                    stability += np.sum(sep_board[i, 2:-1, 1]) + np.sum(sep_board[i, -2, 2:-1])
 
         _board *= weight
         _board = np.sum(_board)
@@ -87,10 +78,8 @@ class AIPlayer:
         max_val = self.small_val
         moves = list(board.get_legal_actions(color))
         global_depth = step + self.depth - depth
-        # total_count = board.count("X") + board.count("O")
-        # print(global_depth, total_count, step, depth)
-        # print(moves)
         oppo_moves = list(board.get_legal_actions(oppo_color))
+
         if len(moves) is 0:
             if len(oppo_moves) is 0:
                 mobility = (len(moves) - len(oppo_moves)) * self.factor
@@ -101,6 +90,7 @@ class AIPlayer:
             if global_depth < 22:
                 return mobility, action
             return self.evaluate(board, color, oppo_color) + mobility, action
+
         # moves = moves[::min(len(moves), self.max_width)]
         for move in moves:
             flipped = board._move(move, color)
