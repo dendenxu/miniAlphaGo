@@ -11,15 +11,15 @@ class AIPlayer:
         self.small_val = small_val
         self.depth = max_depth
         self.max_width = max_width
-        self.weight = np.asarray([[90, -60, 10, 10, 10, 10, -60, 90],
-                                  [-60, -80, 5, 5, 5, 5, -80, 60],
+        self.weight = np.asarray([[150, -80, 10, 10, 10, 10, -80, 150],
+                                  [-80, -90, 5, 5, 5, 5, -90, -80],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [-60, -80, 5, 5, 5, 5, -80, 60],
-                                  [90, -60, 10, 10, 10, 10, -60, 90]])
-        self.factor = abs(np.average(self.weight)) * 50
+                                  [-80, -90, 5, 5, 5, 5, -90, -80],
+                                  [150, -80, 10, 10, 10, 10, -80, 150]])
+        self.factor = 50
         self.history = np.tile(np.arange(64), 128).reshape((2, 64, 64))
 
     def get_move(self, board):
@@ -28,7 +28,6 @@ class AIPlayer:
         return result[1]
 
     def evaluate(self, board, color, oppo_color):
-        weight = self.weight
         _board = np.asarray([[1 if (piece is color) else (-1 if piece is oppo_color else 0)
                               for piece in line] for line in board._board])
         sep_board = np.stack(((_board == 1).astype(int), np.negative((_board == -1).astype(int))))
@@ -51,7 +50,7 @@ class AIPlayer:
                 if sep_board[i, -2, 1]:
                     stability += np.sum(sep_board[i, 2:-1, 1]) + np.sum(sep_board[i, -2, 2:-1])
 
-        _board *= weight
+        _board *= self.weight
         _board = np.sum(_board)
         _board += stability * self.factor
         return _board if np.sum(sep_board[0, :, :]) else self.small_val

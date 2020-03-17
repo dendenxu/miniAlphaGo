@@ -148,7 +148,5 @@ class AIPlayer_history:
         # -----------------请实现你的算法代码--------------------------------------
         step = board.count('X')+board.count('O')
         _, action = self.move_alpha_beta(board, self.minsize, self.maxsize, self.color, 6, step)
-        print(np.sort(np.asarray(self.history)[0, :, :]))
-        print(np.sort(np.asarray(self.history)[1, :, :]))
         # ------------------------------------------------------------------------
         return action

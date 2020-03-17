@@ -10,7 +10,7 @@ if __name__ == '__main__':
     import wyq
     import wyq_history
 
-    max_depth_black = 6
+    max_depth_black = 4
     max_depth_white = 6
     for i in range(4, 7):
     # while True:
