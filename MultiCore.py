@@ -12,17 +12,27 @@ class AIPlayer:
         self.small_val = small_val
         self.depth = max_depth
         self.max_width = max_width
-        self.weight = np.asarray([[100, -60, 10, 10, 10, 10, -60, 100],
-                                  [-60, -90, 5, 5, 5, 5, -90, -60],
+        self.weight = np.asarray([[150, -80, 10, 10, 10, 10, -80, 150],
+                                  [-80, -90, 5, 5, 5, 5, -90, -80],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [-60, -90, 5, 5, 5, 5, -90, -60],
-                                  [100, -60, 10, 10, 10, 10, -60, 100]])
+                                  [-80, -90, 5, 5, 5, 5, -90, -80],
+                                  [150, -80, 10, 10, 10, 10, -80, 150]])
         self.factor = 50
 
     def get_move(self, board):
+        """
+        根据当前棋盘状态获取最佳落子位置
+        :param board: 棋盘
+        :return: action 最佳落子位置, e.g. 'A1'
+        """
+        if self.color == 'X':
+            player_name = '黑棋'
+        else:
+            player_name = '白棋'
+        print("请等一会，对方 {}-{} 正在思考中...".format(player_name, self.color))
         moves = list(board.get_legal_actions(self.color))
         jobs = []
         result_list = Manager().list(range(len(moves)))
