@@ -4,7 +4,7 @@ import numpy as np
 class AIPlayer:
     '''An AIPlayer that gives moves according to current board status'''
 
-    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=6, max_width=12):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=4, max_width=12):
         '''
         :param color: Defining the color of the current player, use 'X' or 'O'
         :param big_val: A value big enough for beta initialization
@@ -19,19 +19,27 @@ class AIPlayer:
         self.depth = max_depth
         self.max_width = max_width
         self.weight = np.asarray([[150, -80, 10, 10, 10, 10, -80, 150],  # weight matrix of board position
-                                  [-80, -90, 5, 5, 5, 5, -90, -80],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [-80, -90, 5, 5, 5, 5, -90, -80],
+                                  [-80, -90,  5,  5,  5,  5, -90, -80],
+                                  [ 10,   5,  1,  1,  1,  1,   5,  10],
+                                  [ 10,   5,  1,  1,  1,  1,   5,  10],
+                                  [ 10,   5,  1,  1,  1,  1,   5,  10],
+                                  [ 10,   5,  1,  1,  1,  1,   5,  10],
+                                  [-80, -90,  5,  5,  5,  5, -90, -80],
                                   [150, -80, 10, 10, 10, 10, -80, 150]])
+        # self.weight = np.asarray([[100, -5, 10, 5, 5, 10, -5, 100],  # weight matrix of board position
+        #                           [-5, -45, 1, 1, 1, 1, -45, -5],
+        #                           [10, 1, 3, 2, 2, 3, 1, 10],
+        #                           [5, 1, 2, 1, 1, 2, 1, 5],
+        #                           [5, 1, 2, 1, 1, 2, 1, 5],
+        #                           [10, 1, 3, 2, 2, 3, 1, 10],
+        #                           [-5, -45, 1, 1, 1, 1, -45, -5],
+        #                           [100, -5, 10, 5, 5, 10, -5, 100]])
         self.factor = 50  # How much mobility and stability affects the evaluation of current board
 
         # History table for evaluating table
         # axis=0: color of history table
         # axis=0: current moves step since the beginning of the game
-        self.history = np.tile(np.arange(64), 128).reshape((2, 64, 64))  
+        self.history = np.tile(np.arange(64), 128).reshape((2, 64, 64))
 
     def get_move(self, board):
         """
@@ -47,11 +55,11 @@ class AIPlayer:
 
         # -----------------请实现你的算法代码--------------------------------------
 
-        result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth, board.count("X") + board.count("O"))
+        _, result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth, board.count("X") + board.count("O"))
 
         # print(result)
         # ------------------------------------------------------------------------
-        return result[1]
+        return result
 
     def evaluate(self, board, color, oppo_color):
         """
@@ -116,6 +124,18 @@ class AIPlayer:
         global_depth = step + self.depth - depth  # Compute current steps taken since the beginning of game
         oppo_moves = list(board.get_legal_actions(oppo_color))  # Get opponent's possible move for computing mobility
 
+        goods = ["A1", "A8", "H1", "H8"]
+        if depth == self.depth:
+            for good in goods:
+                if good in moves:
+                    return 0, good
+
+        # bads = ["A2", "B1", "B2", "A7", "B7", "B8", "G1", "H2", "G2", "G7", "G8", "H7"]
+        # if depth == self.depth:
+        #     for bad in bads:
+        #         if bad in moves:
+
+
         # No possible move for current color
         if len(moves) is 0:
             # No possible move for current opponent
@@ -135,7 +155,7 @@ class AIPlayer:
             # You may have notice that mobility is used twice and we computed it seperately
             # This is because you should never use mobility during the expansion of the tree, so pre-computing it might be a waste
             mobility = (len(moves) - len(oppo_moves)) * self.factor
-            if global_depth < 22:
+            if global_depth < 16:
                 # Try to maintain mobility during the first steps of gaming
                 # A strategy called: Disappearing piece
                 return mobility, action
@@ -160,14 +180,13 @@ class AIPlayer:
                 # Update current alpha value for alpha-beta pruning
                 if max_val > alpha:
                     if max_val >= beta:
-                        action = move
                         # The other children of current node should not be checked anymore
                         # and reward current best move since is leads to an alpha-beta pruning
                         self.reward_move(board, action, color, global_depth, True)
                         return max_val, action
                     # Update
                     alpha = max_val
-        
+
         # Reward current move since it's not the worst move
         if action is not None:
             # Note that sometimes no action can exist so we check
@@ -183,6 +202,8 @@ class AIPlayer:
         :param depth: How many steps since the beginning of the game
         :return: sorted moves based on history table (previous performance of every move)
         '''
+        if depth >= 64:
+            return moves
         # get all possible positions for the moves argument we've accepted
         poss = list(map(lambda x: x[0] * 8 + x[1], [board.board_num(move) for move in moves]))
         # numpy grants argument indexing with np.array
@@ -202,6 +223,8 @@ class AIPlayer:
         :param depth: Whether the move to be rewarded is a best move (leads to pruning)
         :return: nothing
         '''
+        if depth >= 64:
+            return
         # Compute the corresponding position of the move to be rewarded
         x, y = board.board_num(move)
         pos = x * 8 + y

@@ -35,11 +35,11 @@ class AIPlayer:
 
         # -----------------请实现你的算法代码--------------------------------------
 
-        result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth, board.count("X") + board.count("O"))
+        _, result = self.alpha_beta(board, self.small_val, self.big_val, self.color, self.depth, board.count("X") + board.count("O"))
 
         # print(result)
         # ------------------------------------------------------------------------
-        return result[1]
+        return result
 
     def evaluate(self, board, color, oppo_color):
         _board = np.asarray([[1 if (piece is color) else (-1 if piece is oppo_color else 0)

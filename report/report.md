@@ -96,3 +96,69 @@ AIPlayer用到的API：
 4. 蒙特卡洛树搜索涉及到一些复杂的数学运算，难以利用`numpy`提供的向量化加速优势
 5. 蒙特卡洛树搜索过程中需要随时对各种信息进行更新，无法保证线程安全性，很难做到多核CPU优化
 
+Min-Max的原理与书中描述的基本相同，只不过我们采用了递归的形式来简化实现难度，下面粘贴伪代码
+
+```python
+if terminal_state:
+    return self.evaluate(board), action
+# If no terminal state is encountered, we should just enumerate on possible moves computed above
+for move in moves:
+    flipped = board._move(move, color)  # Make a move
+    val = -self.alpha_beta(board, -beta, -alpha, oppo_color, depth - 1)[0]  # Recursively compute the reward
+    board.backpropagation(move, flipped, color)  # Reverse the change made to gaming board for the next enumeration
+    # Update current maximum reward value
+    if val > max_val:
+        max_val = val
+        action = move
+return max_val, action
+```
+
+### 3.2 Alpha-Beta剪枝搜索，递归式的函数调用
+
+我们使用了Alpha-Beta剪枝搜索以加快搜索速度，减少不必要的查找搜索开销
+
+采用了普通的Alpha-Beta剪枝的搜索树策略的时间复杂度为$O(\sqrt{w}^d)$也就是$O({w}^{\frac{d}{2}})$
+
+可以明显加快搜索过程，根据一些分析，若是我们对查找的内容简单排序，就可以逼近上述时间复杂度（也就是我们下面用到的History-Table）
+
+注意我们使用了递归，并且将Max Node与Min Node合并到一起，若要将Min-Max Node的代码合并，我们需要进行以下工作：
+
+1. 将每次调用`alpha_beta`函数的返回值调转符号作为其父节点的值
+2. 每次调用`alpha_beta`函数时调换alpha与beta的值，并且调整他们的符号
+3. 每次实现剪枝的时候都将本节点当作Max节点来看，即为：
+   1. 当取得的`max_val`比我们已有的alpha值大的时候，更新alpha值
+   2. 当取得的`max_val`比我们已有的beta值大的时候，进行剪枝
+
+```python
+if terminal_state:
+    return self.evaluate(board), action
+# If no terminal state is encountered, we should just enumerate on possible moves computed above
+for move in moves:
+    flipped = board._move(move, color)  # Make a move
+    val = -self.alpha_beta(board, -beta, -alpha, oppo_color, depth - 1)[0]  # Recursively compute the reward
+    board.backpropagation(move, flipped, color)  # Reverse the change made to gaming board for the next enumeration
+    # Update current maximum reward value
+    if val > max_val:
+        max_val = val
+        action = move
+        # Update current alpha value for alpha-beta pruning
+        if max_val > alpha:
+            if max_val >= beta:
+                action = move
+                # The other children of current node should not be checked anymore
+                # and reward current best move since is leads to an alpha-beta pruning
+                self.reward_move(board, action, color, global_depth, True)
+                return max_val, action
+            # Update
+            alpha = max_val
+return max_val, action
+```
+
+### 3.3 考虑多重因素的评估函数
+
+我们对Terminal State（或者Max Depth State）的评估函数进行了多方面的调优和测试。在查询资料过程中，我们了解到多种评估策略
+
+1. 棋盘权重：
+
+   类似于围棋，黑白棋也有金角银边草肚皮的简单规律。
+
