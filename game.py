@@ -84,6 +84,8 @@ class Game(object):
         # 初始化胜负结果和棋子差
         winner = None
         diff = -1
+        max_black_time = 0
+        max_white_time = 0
 
         # 游戏开始
         print('\n=====开始游戏!=====\n')
@@ -155,6 +157,7 @@ class Game(object):
             else:
                 # 统计一步所用的时间
                 es_time = end_time - start_time
+
                 if es_time > 6000:  # NOTE: CHANGE ME!!!
                     # 该步超过60秒则结束比赛。
                     print('\n{} 思考超过 60s'.format(self.current_player))

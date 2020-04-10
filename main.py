@@ -11,9 +11,13 @@ if __name__ == '__main__':
     import wyq_history
     import whatthefuck
     import wyq_last
+    import cwy_alphabeta
+    import cwy_mtkl
+    import wyq_last_last
+    import wyq_nb
 
-    max_depth_black = 4
-    max_depth_white = 4
+    max_depth_black = 7
+    max_depth_white = 7
     # for i in range(4, 7):
     while True:
         # 人类玩家黑棋初始化
@@ -21,7 +25,11 @@ if __name__ == '__main__':
         # black_player = RandomPlayer("X")
         # black_player = SimpleAIPlayer.AIPlayer("X", max_depth=max_depth_black)
         # black_player = wyq_last.AIPlayer("X", depth=max_depth_black)
-        black_player = SingleCore.AIPlayer("X", max_depth=max_depth_black)
+        # black_player = SingleCore.AIPlayer("X", max_depth=max_depth_black)
+        # black_player = cwy_alphabeta.AIPlayer("X")
+        # black_player = cwy_mtkl.AIPlayer("X")
+        # black_player = wyq_last_last.AIPlayer("X", max_depth_black)
+        black_player = wyq_nb.AIPlayer("X", max_depth_black)
         # black_player = AIPlayer.AIPlayer("X", max_depth=3)
         # black_player = wyq.AIPlayer("X", max_depth=i)
         # black_player = wyq.AIPlayer("X", max_depth=max_depth_black)
@@ -30,8 +38,11 @@ if __name__ == '__main__':
 
         # AI 玩家 白棋初始化
         # white_player = MultiCore.AIPlayer("O", max_depth=max_depth_white)
-        white_player = wyq_last.AIPlayer("X", depth=max_depth_white)
-        # white_player = SingleCore.AIPlayer("O", max_depth=max_depth_white)
+        # white_player = wyq_last.AIPlayer("O", depth=max_depth_white)
+        # white_player = cwy_alphabeta.AIPlayer("O")
+        white_player = SingleCore.AIPlayer("O", max_depth=max_depth_white)
+        # white_player = wyq_nb.AIPlayer("X", max_depth_white)
+        # white_player = wyq_last_last.AIPlayer("O", max_depth_white)
         # white_player = whatthefuck.AIPlayer("O", max_depth=max_depth_white)
         # white_player = wyq_history.AIPlayer_history("O")
         # white_player = wyq.AIPlayer("O", max_depth=max_depth_white)
