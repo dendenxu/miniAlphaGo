@@ -6,15 +6,18 @@ class Board(object):
     Board 黑白棋棋盘，规格是8*8，黑棋用 X 表示，白棋用 O 表示，未落子时用 . 表示。
     """
 
-    def __init__(self):
+    def __init__(self, init_board=None):
         """
         初始化棋盘状态
         """
         self.empty = '.'  # 未落子状态
-        self._board = [[self.empty for _ in range(8)] for _ in range(8)]  # 规格：8*8
-        self._board[3][4] = 'X'  # 黑棋棋子
-        self._board[4][3] = 'X'  # 黑棋棋子
-        self._board[3][3], self._board[4][4] = 'O', 'O'  # 白棋棋子
+        if init_board is not None:
+            self._board = init_board
+        else:
+            self._board = [[self.empty for _ in range(8)] for _ in range(8)]  # 规格：8*8
+            self._board[3][4] = 'X'  # 黑棋棋子
+            self._board[4][3] = 'X'  # 黑棋棋子
+            self._board[3][3], self._board[4][4] = 'O', 'O'  # 白棋棋子
 
     def __getitem__(self, index):
         """

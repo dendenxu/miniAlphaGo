@@ -5,7 +5,7 @@ import random
 class AIPlayer:
     """An AIPlayer that gives moves according to current board status"""
 
-    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=7, max_width=12):
+    def __init__(self, color, big_val=1e10, small_val=-1e10, max_depth=6, max_width=12):
         """
         :param color: Defining the color of the current player, use 'X' or 'O'
         :param big_val: A value big enough for beta initialization
@@ -14,7 +14,7 @@ class AIPlayer:
         :param max_width: Max search width of game tree, not used in practice
         """
         self.color = color
-        self.oppo_color = "X" if color is "O" else "O"  # Precomputing opponent's color for performance
+        self.oppo_color = "X" if color is "O" else "O"  # Precomputed opponent's color for performance
         self.big_val = big_val
         self.small_val = small_val
         self.depth = max_depth
@@ -22,30 +22,14 @@ class AIPlayer:
         self.goods = ["A1", "A8", "H1", "H8"]
         self.bads = ["A2", "B1", "B2", "A7", "B7", "B8", "G1", "H2", "G2", "G7", "G8", "H7"]
 
-        # self.weight = np.asarray([[150, -80, 10, 10, 10, 10, -80, 150],  # weight matrix of board position
-        #                           [-80, -90, 5, 5, 5, 5, -90, -80],
-        #                           [10, 5, 1, 1, 1, 1, 5, 10],
-        #                           [10, 5, 1, 1, 1, 1, 5, 10],
-        #                           [10, 5, 1, 1, 1, 1, 5, 10],
-        #                           [10, 5, 1, 1, 1, 1, 5, 10],
-        #                           [-80, -90, 5, 5, 5, 5, -90, -80],
-        #                           [150, -80, 10, 10, 10, 10, -80, 150]])
-        self.weight = np.asarray([[500, -60, 20, 20, 20, 20, -60, 500],
-                                  [-60, -500, 5, 5, 5, 5, -500, -60],
+        self.weight = np.asarray([[150, -80, 10, 10, 10, 10, -80, 150],  # weight matrix of board position
+                                  [-80, -90, 5, 5, 5, 5, -90, -80],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [20, 5, 1, 1, 1, 1, 5, 20],
-                                  [20, 5, 1, 1, 1, 1, 5, 20],
                                   [10, 5, 1, 1, 1, 1, 5, 10],
-                                  [-60, -500, 5, 5, 5, 5, -500, -60],
-                                  [500, -60, 20, 20, 20, 20, -60, 500]])
-        # self.weight = np.asarray([[100, -5, 10, 5, 5, 10, -5, 100],  # weight matrix of board position
-        #                           [-5, -45, 1, 1, 1, 1, -45, -5],
-        #                           [10, 1, 3, 2, 2, 3, 1, 10],
-        #                           [5, 1, 2, 1, 1, 2, 1, 5],
-        #                           [5, 1, 2, 1, 1, 2, 1, 5],
-        #                           [10, 1, 3, 2, 2, 3, 1, 10],
-        #                           [-5, -45, 1, 1, 1, 1, -45, -5],
-        #                           [100, -5, 10, 5, 5, 10, -5, 100]])
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [10, 5, 1, 1, 1, 1, 5, 10],
+                                  [-80, -90, 5, 5, 5, 5, -90, -80],
+                                  [150, -80, 10, 10, 10, 10, -80, 150]])
         self.factor = 50  # How much mobility and stability affects the evaluation of current board
 
         # History table for evaluating table
@@ -100,45 +84,45 @@ class AIPlayer:
         _board = np.asarray([[1 if (piece is color) else (-1 if piece is oppo_color else 0)
                               for piece in line] for line in board._board])
         # Separately arranging the board by segmentation
-        # sep_board = np.stack(((_board == 1).astype(int), np.negative((_board == -1).astype(int))))
+        sep_board = np.stack(((_board == 1).astype(int), np.negative((_board == -1).astype(int))))
         # Use vectorized method to compute stability
         # n = sep_board[0]
-        n = _board
-        if ~n[0][0] and (n[0][1] or n[1][0] or n[1][1]):
-            return self.small_val
-        if ~n[7][0] and (n[7][1] or n[6][0] or n[6][1]):
-            return self.small_val
-        if ~n[0][7] and (n[0][6] or n[1][7] or n[1][6]):
-            return self.small_val
-        if ~n[7][7] and (n[7][6] or n[6][7] or n[6][6]):
-            return self.small_val
-        # stability = 0
-        # for i in range(2):
-        #     if sep_board[i, 0, 0]:
-        #         stability += np.sum(sep_board[i, 0, 0:-1]) + np.sum(sep_board[i, 1::, 0])
-        #         if sep_board[i, 1, 1]:
-        #             stability += np.sum(sep_board[i, 1, 1:-2]) + np.sum(sep_board[i, 2:-1, 1])
-        #     if sep_board[i, 0, -1]:
-        #         stability += np.sum(sep_board[i, 0:-1, -1]) + np.sum(sep_board[i, 0, 0:-1])
-        #         if sep_board[i, 1, -2]:
-        #             stability += np.sum(sep_board[i, 1:-2, -2]) + np.sum(sep_board[i, 1, 1:-2])
-        #     if sep_board[i, -1, -1]:
-        #         stability += np.sum(sep_board[i, -1, 1::]) + np.sum(sep_board[i, 0:-1, -1])
-        #         if sep_board[i, -2, -2]:
-        #             stability += np.sum(sep_board[i, -2, 2:-1]) + np.sum(sep_board[i, 1:-2, -2])
-        #     if sep_board[i, -1, 0]:
-        #         stability += np.sum(sep_board[i, 1::, 0]) + np.sum(sep_board[i, -1, 1::])
-        #         if sep_board[i, -2, 1]:
-        #             stability += np.sum(sep_board[i, 2:-1, 1]) + np.sum(sep_board[i, -2, 2:-1])
+        # n = _board
+        # if ~n[0][0] and (n[0][1] or n[1][0] or n[1][1]):
+        #     return self.small_val
+        # if ~n[7][0] and (n[7][1] or n[6][0] or n[6][1]):
+        #     return self.small_val
+        # if ~n[0][7] and (n[0][6] or n[1][7] or n[1][6]):
+        #     return self.small_val
+        # if ~n[7][7] and (n[7][6] or n[6][7] or n[6][6]):
+        #     return self.small_val
+        stability = 0
+        for i in range(2):
+            if sep_board[i, 0, 0]:
+                stability += np.sum(sep_board[i, 0, 0:-1]) + np.sum(sep_board[i, 1::, 0])
+                if sep_board[i, 1, 1]:
+                    stability += np.sum(sep_board[i, 1, 1:-2]) + np.sum(sep_board[i, 2:-1, 1])
+            if sep_board[i, 0, -1]:
+                stability += np.sum(sep_board[i, 0:-1, -1]) + np.sum(sep_board[i, 0, 0:-1])
+                if sep_board[i, 1, -2]:
+                    stability += np.sum(sep_board[i, 1:-2, -2]) + np.sum(sep_board[i, 1, 1:-2])
+            if sep_board[i, -1, -1]:
+                stability += np.sum(sep_board[i, -1, 1::]) + np.sum(sep_board[i, 0:-1, -1])
+                if sep_board[i, -2, -2]:
+                    stability += np.sum(sep_board[i, -2, 2:-1]) + np.sum(sep_board[i, 1:-2, -2])
+            if sep_board[i, -1, 0]:
+                stability += np.sum(sep_board[i, 1::, 0]) + np.sum(sep_board[i, -1, 1::])
+                if sep_board[i, -2, 1]:
+                    stability += np.sum(sep_board[i, 2:-1, 1]) + np.sum(sep_board[i, -2, 2:-1])
 
         # Compute weighted evaluation using vectorized method
         _board *= self.weight
         _board = np.sum(_board)
-        # _board += stability * self.factor
+        _board += stability * self.factor
 
         # Return the evaluation and cut current move if it leads to failure
-        # return _board if np.sum(sep_board[0, :, :]) else self.small_val
-        return _board
+        return _board if np.sum(sep_board[0, :, :]) else self.small_val
+        # return _board
 
     def alpha_beta(self, board, alpha, beta, color, depth, step):
         """
@@ -180,7 +164,7 @@ class AIPlayer:
         # If maximum depth is already reached, we should just return the result
         if depth <= 0:
             # Compute mobility
-            # You may have notice that mobility is used twice and we computed it seperately
+            # You may have notice that mobility is used twice and we computed it separately
             # This is because you should never use mobility during the expansion of the tree, so pre-computing it
             # might be a waste
             mobility = (len(moves) - len(oppo_moves)) * self.factor
@@ -192,8 +176,8 @@ class AIPlayer:
             return self.evaluate(board, color, oppo_color) + mobility, action
 
         # TODO: And reconsider this
-        if depth == self.depth and global_depth <= 52:
-            moves = self.remove_bad(moves)
+        # if depth == self.depth and global_depth <= 52:
+        #     moves = self.remove_bad(moves)
         # Sort our moves according to the history table
         moves = self.history_sort(board, moves, color, global_depth)
 
@@ -227,7 +211,9 @@ class AIPlayer:
         return max_val, action
 
     def remove_bad(self, moves):
-        temp_moves = moves
+        # TODO: Figure out why you crashed
+        # return moves
+        temp_moves = moves.copy()
         for bad in self.bads:
             try:
                 temp_moves.remove(bad)

@@ -9,8 +9,8 @@ import time
 
 
 class Game(object):
-    def __init__(self, black_player, white_player):
-        self.board = Board()  # 棋盘
+    def __init__(self, black_player, white_player, init_board=None):
+        self.board = Board(init_board)  # 棋盘
         # 定义棋盘上当前下棋棋手，先默认是 None
         self.current_player = None
         self.black_player = black_player  # 黑棋一方
@@ -208,7 +208,6 @@ class Game(object):
 
         return is_over
 
-
     def run_quite(self):
         """
                 运行游戏
@@ -325,7 +324,7 @@ class Game(object):
         if winner is not None and diff > -1:
             result = {0: 'black_win', 1: 'white_win', 2: 'draw'}[winner]
 
-        return winner, diff
+        return winner, diff, total_time
 #
 #
 # if __name__ == '__main__':

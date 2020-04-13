@@ -15,11 +15,13 @@ if __name__ == '__main__':
     import cwy_mtkl
     import wyq_last_last
     import wyq_nb
+    import wyq_really_nb
 
-    max_depth_black = 7
-    max_depth_white = 7
-    # for i in range(4, 7):
-    while True:
+    times = []
+    # while True:
+    for i in range(1, 7):
+        max_depth_black = i
+        max_depth_white = i
         # 人类玩家黑棋初始化
         # black_player = HumanPlayer("X")
         # black_player = RandomPlayer("X")
@@ -29,7 +31,8 @@ if __name__ == '__main__':
         # black_player = cwy_alphabeta.AIPlayer("X")
         # black_player = cwy_mtkl.AIPlayer("X")
         # black_player = wyq_last_last.AIPlayer("X", max_depth_black)
-        black_player = wyq_nb.AIPlayer("X", max_depth_black)
+        # black_player = wyq_nb.AIPlayer("X", max_depth_black)
+        black_player = wyq_really_nb.AIPlayer("X", max_depth_black)
         # black_player = AIPlayer.AIPlayer("X", max_depth=3)
         # black_player = wyq.AIPlayer("X", max_depth=i)
         # black_player = wyq.AIPlayer("X", max_depth=max_depth_black)
@@ -52,12 +55,16 @@ if __name__ == '__main__':
         game = Game(black_player, white_player)
 
         # 开始下棋
-        game.run()
-        # print("Current max depth: {} : {}".format(i, max_depth_white))
-        # print(game.run_quite())
-        again = input("兄贵，再试一次？（狗头）：yes/no/change max_depth: ")
-        if again[0] == 'N' or again[0] == 'n':
-            break
-        if again[0] == 'C' or again[0] == "c":
-            max_depth_black = int(input("Max depth for black: "))
-            max_depth_white = int(input("Max depth for white: "))
+        # game.run()
+        print("Current max depth: {} : {}".format(i, max_depth_white))
+        result = game.run_quite()
+        print(result)
+        times = times + [result[-1]]
+        # again = input("兄贵，再试一次？（狗头）：yes/no/change max_depth: ")
+        # if again[0] == 'N' or again[0] == 'n':
+        #     break
+        # if again[0] == 'C' or again[0] == "c":
+        #     max_depth_black = int(input("Max depth for black: "))
+        #     max_depth_white = int(input("Max depth for white: "))
+
+    print(times)

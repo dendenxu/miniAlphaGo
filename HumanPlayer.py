@@ -35,6 +35,8 @@ class HumanPlayer:
             if action == "Q" or action == 'q':
                 return "Q"
             else:
+                if len(action) == 0:
+                    continue
                 row, col = action[1].upper(), action[0].upper()
 
                 # 检查人类输入是否正确
